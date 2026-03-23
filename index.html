@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>茶花开了 - 数字化传承</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+    
+    body, html { margin: 0; padding: 0; height: 100%; background-color: #1a1a1a; font-family: 'Noto Serif SC', serif; user-select: none; overflow: hidden; }
+    #app { max-width: 480px; height: 100vh; margin: 0 auto; position: relative; overflow: hidden; background: #2c251e; color: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    .scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; box-sizing: border-box; background-size: cover; background-position: center; transition: opacity 0.8s ease-in-out; opacity: 0; z-index: 10; }
+    .scene.active { display: flex; opacity: 1; }
+    
+    /* 摄像头背景层 */
+    #camera-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #111; display: none; }
+    #camera-feed { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+    .camera-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)); z-index: 2; pointer-events: none; }
+
+    /* 通用UI */
+    .dialogue { background: rgba(0, 0, 0, 0.75); border: 1px solid #c85a5a; border-radius: 8px; padding: 18px; margin-top: auto; margin-bottom: 40px; width: 90%; line-height: 1.7; font-size: 15px; text-align: justify; z-index: 10;}
+    .btn { background: #c85a5a; color: #fff; border: none; padding: 12px 24px; font-size: 16px; border-radius: 25px; margin-top: 30px; cursor: pointer; font-family: 'Noto Serif SC', serif; font-weight: bold; transition: transform 0.2s, background 0.3s; box-shadow: 0 4px 10px rgba(200, 90, 90, 0.3); z-index: 10;}
+    .btn:active { transform: scale(0.95); }
+    .btn.disabled { background: #555; color: #999; pointer-events: none; box-shadow: none; }
+    
+    /* 动画 */
+    @keyframes titleFadeIn { 0% { opacity: 0; transform: translateY(14px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes revealUp { 0% { visibility: visible; opacity: 0; transform: translate(-50%, -40%); } 100% { visibility: visible; opacity: 1; transform: translate(-50%, -50%); } }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes bloom { 0% { transform: scale(0) rotate(-45deg); opacity: 0; filter: blur(10px); } 70% { transform: scale(1.1) rotate(10deg); opacity: 1; filter: blur(0); } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+    @keyframes fall { 0% { transform: translateY(-50px) rotate(0deg) scale(0.8); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg) scale(1.2); opacity: 0; } }
+    @keyframes scanLine { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+    /* 场景一：标题 */
+    #scene1-title { font-family: 'KaiTi', 'STKaiti', serif; font-size: 48px; font-weight: 800; color: #fffbd9; text-shadow: 0 6px 14px rgba(0, 0, 0, 0.6); margin-top: 20vh; margin-bottom: 50px; letter-spacing: 4px; opacity: 0; animation: titleFadeIn 1.8s ease-out 0.2s forwards; }
+    #scene1 { justify-content: flex-start; background-image: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.8)), url('./assets/scene1.jpg'); }
+    #scene2 { background: transparent; }
+    #scene3 { background-image: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.78)), url('./assets/scene34.jpg'); }
+    #scene4 { background-image: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.78)), url('./assets/scene34.jpg'); }
+    .scene-cta { position: absolute; top: 75%; left: 50%; transform: translate(-50%, -50%); width: 90%; display: flex; flex-direction: column; align-items: center; }
+    #scene1 .scene-cta { visibility: hidden; opacity: 0; animation: revealUp 0.8s ease-out 1.2s forwards; }
+    
+    /* 场景二：AR扫描器 */
+    .scanner-container { position: relative; width: 240px; height: 240px; margin-bottom: 40px; margin-top: 10vh; }
+    .scanner-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px dashed rgba(200, 90, 90, 0.8); border-radius: 50%; box-sizing: border-box; animation: spin 10s linear infinite; }
+    .scanner-ring.fast { border-color: #c85a5a; border-width: 4px; animation: spin 2s linear infinite; box-shadow: 0 0 20px rgba(200, 90, 90, 0.5); }
+    .scanner-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: rgba(200, 90, 90, 0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center;}
+    .scan-line { position: absolute; left: 0; width: 100%; height: 2px; background: #c85a5a; box-shadow: 0 0 10px #c85a5a; display: none; }
+    .scan-line.active { display: block; animation: scanLine 2s linear infinite; }
+    .progress-text { margin-top: 20px; font-size: 18px; color: #fffbd9; font-weight: bold; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);}
+
+    /* 场景三 & 四：SVG 矢量茶花 */
+    .camellia-wrapper { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; margin-top: 10vh; margin-bottom: 20px; }
+    .svg-flower { width: 180px; height: 180px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); opacity: 0; }
+    .svg-flower.bloom { animation: bloom 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+    
+    /* CSS 绘制的下落花瓣 */
+    .css-petal { position: absolute; top: -10%; width: 20px; height: 20px; background: #c85a5a; border-radius: 50% 0 50% 50%; pointer-events: none; z-index: 100; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+    .css-petal::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #e27a7a; border-radius: 50% 0 50% 50%; opacity: 0.6; }
+
+    /* 场景四：专属卡片 */
+    #scene4 { background-color: #2c251e; }
+    .card { background: #f4ebd8; color: #2c251e; width: 90%; max-width: 340px; border-radius: 16px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.6); position: relative; text-align: center; }
+    .card-img-area { width: 100%; height: 220px; background: #3a2e26; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(#5c4538 1px, transparent 1px); background-size: 15px 15px;}
+    .card-img-area::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; background: linear-gradient(transparent, #f4ebd8); }
+    .card .svg-flower { width: 140px; height: 140px; opacity: 1; transform: scale(1.1); filter: drop-shadow(0 15px 25px rgba(0,0,0,0.6)); }
+    .card-content { padding: 30px 20px; }
+    .card h2 { color: #8c2e2e; margin: 0 0 10px 0; font-family: 'KaiTi', serif; font-size: 28px; letter-spacing: 2px;}
+    .card p { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px; text-align: justify; }
+    .tag { display: inline-block; border: 1px solid #8c2e2e; color: #8c2e2e; padding: 4px 12px; border-radius: 15px; font-size: 12px; margin: 0 4px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+    <div id="camera-container">
+        <video id="camera-feed" autoplay playsinline muted></video>
+        <div class="camera-overlay"></div>
+    </div>
+
+    <div id="scene1" class="scene active">
+        <div id="scene1-title" style="color:#f4d8d8;">茶花开了</div>
+        <div class="scene-cta">
+            <div class="dialogue" style="border-color: #c85a5a;">
+                2025年，客家小镇来了位年轻设计师小林。<br><br>
+                她想用AR让年轻人“看见”茶文化。<br>
+                阿婆拿出一只旧擂钵：“你看这沟槽，像不像花瓣？”<br>
+                小林有了灵感……
+            </div>
+            <button class="btn" onclick="startAR()">开启 AR 体验</button>
+        </div>
+    </div>
+
+    <div id="scene2" class="scene">
+        <div class="scanner-container">
+            <div class="scanner-ring" id="scan-ring"></div>
+            <div class="scanner-center"></div>
+            <div class="scan-line" id="scan-line"></div>
+        </div>
+        <div class="progress-text" id="scan-text">寻找圆形器物...</div>
+        
+        <div class="scene-cta" style="top: 85%;">
+            <div class="dialogue" style="background: rgba(0,0,0,0.5); border: none; padding: 10px; margin-bottom: 20px; text-align: center;">
+                请将镜头对准身边的圆形器物<br>（如茶杯、碗、擂钵）
+            </div>
+            <button class="btn" id="btn-scan" onclick="triggerScan()">开始识别</button>
+        </div>
+    </div>
+
+    <div id="scene3" class="scene">
+        <div class="camellia-wrapper">
+            <svg viewBox="0 0 100 100" class="svg-flower" id="ar-flower" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="20" r="24" fill="#8c2e2e"/>
+                <circle cx="80" cy="50" r="24" fill="#8c2e2e"/>
+                <circle cx="50" cy="80" r="24" fill="#8c2e2e"/>
+                <circle cx="20" cy="50" r="24" fill="#8c2e2e"/>
+                <circle cx="28" cy="28" r="20" fill="#a43535"/>
+                <circle cx="72" cy="28" r="20" fill="#a43535"/>
+                <circle cx="72" cy="72" r="20" fill="#a43535"/>
+                <circle cx="28" cy="72" r="20" fill="#a43535"/>
+                <circle cx="50" cy="32" r="16" fill="#c85a5a"/>
+                <circle cx="68" cy="50" r="16" fill="#c85a5a"/>
+                <circle cx="50" cy="68" r="16" fill="#c85a5a"/>
+                <circle cx="32" cy="50" r="16" fill="#c85a5a"/>
+                <circle cx="42" cy="42" r="12" fill="#e27a7a"/>
+                <circle cx="58" cy="42" r="12" fill="#e27a7a"/>
+                <circle cx="58" cy="58" r="12" fill="#e27a7a"/>
+                <circle cx="42" cy="58" r="12" fill="#e27a7a"/>
+                <circle cx="50" cy="50" r="8" fill="#f4c842"/>
+                <circle cx="50" cy="50" r="4" fill="#fffbd9" opacity="0.6"/>
+            </svg>
+        </div>
+        <div class="scene-cta" style="top: 80%;">
+            <div class="dialogue" style="border-color: #c85a5a; text-align: center; font-size: 18px; font-weight: bold; color: #f4d8d8; letter-spacing: 2px;">
+                “茶花开了，故事就活了。”
+            </div>
+            <button class="btn" style="background: #fffbd9; color: #8c2e2e;" onclick="nextScene(3)">生成专属茶花卡</button>
+        </div>
+    </div>
+
+    <div id="scene4" class="scene">
+        <div class="card">
+            <div class="card-img-area">
+                <svg viewBox="0 0 100 100" class="svg-flower" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="20" r="24" fill="#8c2e2e"/>
+                    <circle cx="80" cy="50" r="24" fill="#8c2e2e"/>
+                    <circle cx="50" cy="80" r="24" fill="#8c2e2e"/>
+                    <circle cx="20" cy="50" r="24" fill="#8c2e2e"/>
+                    <circle cx="28" cy="28" r="20" fill="#a43535"/>
+                    <circle cx="72" cy="28" r="20" fill="#a43535"/>
+                    <circle cx="72" cy="72" r="20" fill="#a43535"/>
+                    <circle cx="28" cy="72" r="20" fill="#a43535"/>
+                    <circle cx="50" cy="32" r="16" fill="#c85a5a"/>
+                    <circle cx="68" cy="50" r="16" fill="#c85a5a"/>
+                    <circle cx="50" cy="68" r="16" fill="#c85a5a"/>
+                    <circle cx="32" cy="50" r="16" fill="#c85a5a"/>
+                    <circle cx="42" cy="42" r="12" fill="#e27a7a"/>
+                    <circle cx="58" cy="42" r="12" fill="#e27a7a"/>
+                    <circle cx="58" cy="58" r="12" fill="#e27a7a"/>
+                    <circle cx="42" cy="58" r="12" fill="#e27a7a"/>
+                    <circle cx="50" cy="50" r="8" fill="#f4c842"/>
+                    <circle cx="50" cy="50" r="4" fill="#fffbd9" opacity="0.6"/>
+                </svg>
+            </div>
+            <div class="card-content">
+                <h2>数字茶花卡</h2>
+                <p>客家擂钵的沟槽里，藏着岁月绽放的花。<br>科技让古老的茶香，在你的指尖重新苏醒。</p>
+                <div>
+                    <span class="tag">#数字化传承</span>
+                    <span class="tag">#当代创新</span>
+                    <span class="tag">#AR体验</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 40px; display: flex; gap: 20px;">
+            <button class="btn" style="margin-top: 0; background: #f4ebd8; color: #2c251e;" onclick="location.reload()">重温体验</button>
+            <button class="btn" style="margin-top: 0;" onclick="alert('长按上方卡片即可保存到相册分享至朋友圈哦！')">分享朋友圈</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let videoStream = null;
+
+    function nextScene(current) {
+        document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+        document.getElementById(`scene${current+1}`).classList.add('active');
+    }
+
+    async function startAR() {
+        nextScene(1);
+        const cameraContainer = document.getElementById('camera-container');
+        const video = document.getElementById('camera-feed');
+        
+        cameraContainer.style.display = 'block';
+
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "environment" } 
+            });
+            video.srcObject = videoStream;
+        } catch (err) {
+            console.warn("无法调用摄像头，启用默认背景", err);
+            video.style.display = 'none';
+            cameraContainer.style.background = "linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('https://files.catbox.moe/c9tpii.jpg')";
+            cameraContainer.style.backgroundSize = "cover";
+        }
+    }
+
+    function triggerScan() {
+        const btn = document.getElementById('btn-scan');
+        const ring = document.getElementById('scan-ring');
+        const scanLine = document.getElementById('scan-line');
+        const text = document.getElementById('scan-text');
+        
+        btn.classList.add('disabled');
+        btn.innerText = '识别中...';
+        ring.classList.add('fast');
+        scanLine.classList.add('active');
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.floor(Math.random() * 15) + 5;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                text.innerText = '识别成功！';
+                text.style.color = '#c85a5a';
+                setTimeout(showBlooming, 800);
+            } else {
+                text.innerText = `正在解析轮廓... ${progress}%`;
+            }
+        }, 300);
+    }
+
+    function showBlooming() {
+        nextScene(2);
+        
+        const flower = document.getElementById('ar-flower');
+        flower.classList.add('bloom');
+        
+        startPetalFall();
+    }
+
+    function startPetalFall() {
+        const app = document.getElementById('scene3');
+        
+        for(let i = 0; i < 30; i++) {
+            setTimeout(() => {
+                const petal = document.createElement('div');
+                // 使用纯 CSS 绘制的花瓣类名
+                petal.classList.add('css-petal');
+                
+                const sizeScale = Math.random() * 0.8 + 0.5; // 缩放比例
+                const left = Math.random() * 100;
+                const duration = Math.random() * 4 + 3;
+                
+                petal.style.transform = `scale(${sizeScale})`;
+                petal.style.left = `${left}%`;
+                petal.style.animation = `fall ${duration}s linear forwards`;
+                
+                app.appendChild(petal);
+                
+                setTimeout(() => petal.remove(), duration * 1000);
+            }, i * 150);
+        }
+    }
+</script>
+</body>
+</html>
