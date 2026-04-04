@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>茶席上的座次 - 围龙屋里的伦理</title>
+<style>
+    body, html { margin: 0; padding: 0; height: 100%; background-color: #1a1a1a; font-family: 'Noto Serif', 'Source Han Serif SC', 'Songti SC', 'STSong', serif; user-select: none; }
+    #app { max-width: 480px; height: 100vh; margin: 0 auto; position: relative; overflow: hidden; background: #2c251e; color: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    .scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; box-sizing: border-box; background-size: cover; background-position: center; transition: opacity 0.8s ease-in-out; opacity: 0; }
+    .scene.active { display: flex; opacity: 1; }
+    
+    /* 文本框与按钮 */
+    .dialogue { background: rgba(0, 0, 0, 0.75); border: 1px solid #c1a272; border-radius: 8px; padding: 18px; margin-top: auto; margin-bottom: 40px; width: 90%; line-height: 1.7; font-size: 15px; text-align: justify; z-index: 10;}
+    .btn { background: #c1a272; color: #2c251e; border: none; padding: 12px 24px; font-size: 16px; border-radius: 25px; margin-top: 30px; cursor: pointer; font-family: 'Noto Serif', 'Source Han Serif SC', 'Songti SC', 'STSong', serif; font-weight: bold; transition: transform 0.2s, background 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10;}
+    .btn:active { transform: scale(0.95); }
+    .btn.disabled { background: #555; color: #999; pointer-events: none; box-shadow: none; }
+    
+    .alert-msg { position: absolute; top: 12%; background: rgba(140, 46, 46, 0.95); padding: 10px 20px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;}
+
+    /* 动画 */
+    @keyframes titleFadeIn { 0% { opacity: 0; transform: translateY(14px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes revealUp { 0% { visibility: visible; opacity: 0; transform: translate(-50%, -40%); } 100% { visibility: visible; opacity: 1; transform: translate(-50%, -50%); } }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(193, 162, 114, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(193, 162, 114, 0); } 100% { box-shadow: 0 0 0 0 rgba(193, 162, 114, 0); } }
+
+    /* 场景一：标题 */
+    #scene1-title { font-family: 'KaiTi', 'STKaiti', serif; font-size: 48px; font-weight: 800; color: #fffbd9; text-shadow: 0 6px 14px rgba(0, 0, 0, 0.6); margin-top: 20vh; margin-bottom: 50px; letter-spacing: 4px; opacity: 0; animation: titleFadeIn 1.8s ease-out 0.2s forwards; }
+    #scene1 { justify-content: flex-start; }
+    .scene-cta { position: absolute; top: 75%; left: 50%; transform: translate(-50%, -50%); width: 90%; display: flex; flex-direction: column; align-items: center; }
+    #scene1 .scene-cta { visibility: hidden; opacity: 0; animation: revealUp 0.8s ease-out 1.8s forwards; }
+    
+    /* 场景二：平面图找北侧 */
+    .floor-plan-wrapper { position: relative; width: 280px; height: 340px; margin-bottom: 20px; margin-top: 40px;}
+    .compass { position: absolute; top: -10px; right: -20px; width: 60px; height: 60px; background: rgba(0,0,0,0.6); border-radius: 50%; border: 2px solid #c1a272; display: flex; align-items: center; justify-content: center; z-index: 10; flex-direction: column; font-size: 10px; color: #c1a272;}
+    .compass-needle { width: 4px; height: 30px; background: linear-gradient(to bottom, #8c2e2e 50%, #fff 50%); margin-bottom: 2px; border-radius: 2px; transform: rotate(0deg); transition: transform 1.5s cubic-bezier(0.25, 1, 0.5, 1); }
+    .floor-plan { width: 100%; height: 100%; border-radius: 50% 50% 0 0 / 20% 20% 0 0; background: rgba(193, 162, 114, 0.05); border: 2px solid #555; display: flex; flex-direction: column; align-items: center; padding-top: 50px; position: relative; box-sizing: border-box; }
+    .weilong-curve { position: absolute; top: -10px; left: -10px; right: -10px; height: 120px; border: 4px solid #8c2e2e; border-bottom: none; border-radius: 50% 50% 0 0 / 100% 100% 0 0; opacity: 0.6; }
+    .weilong-label { position: absolute; top: -35px; color: #8c2e2e; font-size: 14px; letter-spacing: 2px; }
+    .hall-area { width: 140px; height: 70px; border: 2px dashed #c1a272; display: flex; justify-content: center; align-items: center; font-size: 16px; cursor: pointer; transition: 0.3s; background: rgba(0,0,0,0.5); z-index: 2; position: relative; }
+    .hall-area.top { margin-bottom: 10px; }
+    .hall-area.bottom { margin-top: 10px; border-color: #777; color: #999; }
+    .hall-area.target { animation: pulse 2s infinite; }
+    .hall-area.success { background: rgba(193, 162, 114, 0.4); border: 2px solid #fffbd9; color: #fffbd9; animation: none; pointer-events: none;}
+    .courtyard { width: 140px; height: 40px; border: 1px solid #444; display: flex; justify-content: center; align-items: center; font-size: 12px; color: #666; }
+
+    /* 场景三 & 场景四：长桌俯视图UI */
+    .tea-room-layout { position: relative; width: 220px; height: 380px; margin-top: 20px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
+    .bg-compass { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 120px; color: rgba(193, 162, 114, 0.08); pointer-events: none; font-family: 'KaiTi', serif; z-index: 0;}
+    
+    /* 长木桌 */
+    .long-table { width: 120px; height: 200px; background: #4a3022; border: 3px solid #332015; border-radius: 6px; box-shadow: inset 0 0 20px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 15px 0; box-sizing: border-box; position: relative; z-index: 1;}
+    .table-runner { position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 40px; background: rgba(193, 162, 114, 0.1); border-left: 1px dashed rgba(193, 162, 114, 0.3); border-right: 1px dashed rgba(193, 162, 114, 0.3); z-index: 0;}
+    
+    /* 座位/蒲团 */
+    .seat-zone { width: 70px; height: 70px; border: 2px dashed #c1a272; border-radius: 50%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; position: relative; z-index: 2; cursor: pointer;}
+    .seat-zone.active { border: 2px solid #fffbd9; background: rgba(193, 162, 114, 0.3); }
+    .seat-label { position: absolute; top: -20px; font-size: 12px; color: #c1a272; white-space: nowrap; }
+    .seat-label.bottom { top: auto; bottom: -20px; }
+    .seat-filled { width: 70px; height: 70px; border-radius: 50%; background: #2c251e; border: 2px solid #c1a272; display: flex; align-items: center; justify-content: center; font-size: 40px; z-index: 2;}
+
+    /* 待选人物 */
+    .characters { display: flex; justify-content: center; gap: 30px; margin-top: 10px; width: 100%; z-index: 2;}
+    .char-btn { width: 60px; height: 60px; border-radius: 50%; background: #4a3f35; border: 2px solid #c1a272; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: 0.3s; }
+    .char-btn.selected { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(193, 162, 114, 0.4); border-color: #fffbd9; }
+    .char-btn.hidden { opacity: 0; pointer-events: none; }
+    
+    /* 桌面茶具 (场景四) */
+    .teapot { font-size: 36px; z-index: 2; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); margin-top: 20px;}
+    .cup-on-table { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #777; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999; cursor: pointer; transition: 0.4s; position: relative; z-index: 2;}
+    .cup-on-table.target { border-color: #c1a272; color: #fff; animation: pulse 2s infinite; background: rgba(193, 162, 114, 0.2); }
+    .cup-on-table.served { background: #c1a272; color: #2c251e; border-color: #c1a272; font-weight: bold; animation: none; pointer-events: none; font-size: 16px;}
+    .cup-text { position: absolute; right: -45px; font-size: 12px; color: #c1a272; white-space: nowrap; }
+
+    /* 场景六：知识卡片 */
+    .card { background: #f4ebd8; color: #2c251e; padding: 30px; border-radius: 12px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 2px solid #b38b4d; position: relative; overflow: hidden; }
+    .card::before { content: '宗族'; position: absolute; top: -10px; right: -10px; font-size: 80px; color: rgba(179, 139, 77, 0.1); font-family: 'KaiTi', serif; font-weight: bold; z-index: 0; }
+    .card * { position: relative; z-index: 1; }
+    .card h2 { color: #5c4033; margin-top: 0; text-align: center; border-bottom: 1px solid #d4c4a8; padding-bottom: 15px; font-size: 22px; }
+    .tag { display: inline-block; background: #8c2e2e; color: white; padding: 4px 10px; border-radius: 15px; font-size: 12px; margin-right: 6px; margin-top: 15px; }
+    .story-link-group { display: flex; gap: 12px; justify-content: center; margin-top: 40px; flex-wrap: wrap; }
+    .story-link-group .btn { margin-top: 0; }
+
+    /* 背景图占位 */
+    #scene1 { background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.8)), url('./assets/scene1-new.jpg'); }
+    #scene2 { background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.82)), url('./assets/scene2-new.jpg'); }
+    #scene3 { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.9)), url('./assets/scene3-new.jpg'); }
+    #scene4 { background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.9)), url('./assets/scene3-new.jpg'); }
+    #scene5 { background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('./assets/scene5-new.jpg'); }
+    #scene6 { background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('./assets/scene5-new.jpg'); }
+</style>
+</head>
+<body>
+
+<div id="app">
+    <div class="alert-msg" id="global-alert">提示信息</div>
+
+    <div id="scene1" class="scene active">
+        <div id="scene1-title">茶席上的座次</div>
+        <div class="scene-cta">
+            <div class="dialogue">围龙屋中堂，阿公端坐北侧，面前长条茶桌一字排开。<br><br>今天是“祭祖日”，阿孙第一次负责敬茶。面对空荡荡的茶席，他犯了难……</div>
+            <button class="btn" onclick="nextScene(1); initCompass();">步入中堂</button>
+        </div>
+    </div>
+
+    <div id="scene2" class="scene">
+        <div class="dialogue" id="s2-text">客家围龙屋依山而建，坐北朝南。<br>敬茶前，需先辨明方位。<br><span style="color:#c1a272">（请点击平面图中的“北侧/上厅”区域）</span></div>
+        <div class="floor-plan-wrapper">
+            <div class="compass"><div class="compass-needle" id="compass-needle"></div><span>北</span></div>
+            <div class="floor-plan">
+                <div class="weilong-curve"></div>
+                <div class="weilong-label">半圆形花头（围龙）</div>
+                <div class="hall-area top target" id="hall-north" onclick="findNorth('north')">上厅 (祖堂)</div>
+                <div class="courtyard">天井</div>
+                <div class="hall-area bottom" id="hall-south" onclick="findNorth('south')">下厅 (大门)</div>
+            </div>
+        </div>
+        <button class="btn disabled" id="btn-s2" onclick="nextScene(2)">前往布置茶席</button>
+    </div>
+
+    <div id="scene3" class="scene">
+        <div class="dialogue" id="s3-text">方位已定。“阿公，这座位该怎么坐？”<br><span style="color:#c1a272">（请先点击下方人物，再点击桌边的蒲团安排落座）</span></div>
+        
+        <div class="tea-room-layout">
+            <div class="bg-compass">北</div>
+            
+            <div class="seat-zone" id="seat-north" onclick="placeCharacter('north')">
+                <span class="seat-label">北侧·主位</span>
+            </div>
+            
+            <div class="long-table">
+                <div class="table-runner"></div>
+                <div class="teapot" style="opacity: 0.3;">🫖</div>
+            </div>
+            
+            <div class="seat-zone" id="seat-south" onclick="placeCharacter('south')">
+                <span class="seat-label bottom">南侧·次位</span>
+            </div>
+        </div>
+
+        <div class="characters">
+            <div class="char-btn" id="char-agong" onclick="selectCharacter('agong', '👴')">👴</div>
+            <div class="char-btn" id="char-asun" onclick="selectCharacter('asun', '👦')">👦</div>
+        </div>
+        
+        <button class="btn disabled" id="btn-s3" onclick="nextScene(3)">摆放茶具</button>
+    </div>
+
+    <div id="scene4" class="scene">
+        <div class="dialogue" id="s4-text">两人落座。“阿公，茶先给谁？”<br>阿公抚须道：“北尊南卑，先敬祖，再敬长。”<br><span style="color:#c1a272">（请按正确顺序点击桌上的空杯倒茶）</span></div>
+        
+        <div class="tea-room-layout">
+            <div class="bg-compass">北</div>
+            
+            <div class="seat-filled">👴</div>
+            
+            <div class="long-table">
+                <div class="table-runner"></div>
+                <div class="cup-on-table target" id="cup-north" onclick="serveTea('north')">
+                    空杯<div class="cup-text">北侧</div>
+                </div>
+                
+                <div class="teapot">🫖</div>
+                
+                <div class="cup-on-table" id="cup-south" onclick="serveTea('south')">
+                    空杯<div class="cup-text">南侧</div>
+                </div>
+            </div>
+            
+            <div class="seat-filled">👦</div>
+        </div>
+
+        <button class="btn disabled" id="btn-s4" onclick="nextScene(4)">完成敬茶</button>
+    </div>
+
+    <div id="scene5" class="scene">
+        <div class="scene-cta">
+            <div class="dialogue" style="text-align: center; font-size: 18px;">
+                <span style="font-size: 40px; display: block; margin-bottom: 10px;">🍵</span>
+                阿孙捧茶，从北至南，依次奉上。<br>每一步，都是对“和敬”的体认。
+            </div>
+            <button class="btn" onclick="nextScene(5)">触发空间解析</button>
+        </div>
+    </div>
+
+    <div id="scene6" class="scene">
+        <div class="card">
+            <h2>空间仪式与宗族伦理</h2>
+            <p>在传统客家围龙屋的空间布局中，<strong>"北"（上厅/祖堂）</strong>代表着根源与宗祖，属于最尊贵的位置；<strong>"南"（下厅/大门）</strong>则代表子孙延绵，向下扎根。</p>
+            <p>阿公坐北，阿孙居南，敬茶从北至南。这不仅仅是一杯茶的物理传递，更是<strong>“尊祖敬长、长幼有序”</strong>的宗族伦理在建筑长桌、蒲团与茶杯间的完美投影。</p>
+            <hr style="border:0; border-top:1px dashed #d4c4a8; margin: 20px 0;">
+            <div class="tag">#宗族伦理</div>
+            <div class="tag">#北尊南卑</div>
+            <div class="tag">#围龙屋空间</div>
+        </div>
+        <div class="story-link-group">
+            <button class="btn" onclick="location.reload()">再次体验</button>
+            <button class="btn" onclick="goToChapter('../tea3-pages-repo/index.html')">进入下一章</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function nextScene(current) {
+        document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+        document.getElementById(`scene${current+1}`).classList.add('active');
+    }
+
+    function showAlert(msg) {
+        const alertBox = document.getElementById('global-alert');
+        alertBox.innerText = msg;
+        alertBox.style.opacity = 1;
+        setTimeout(() => { alertBox.style.opacity = 0; }, 2000);
+    }
+
+    // --- 场景2逻辑 ---
+    function initCompass() {
+        const needle = document.getElementById('compass-needle');
+        setTimeout(() => { needle.style.transform = 'rotate(-15deg)'; }, 300);
+        setTimeout(() => { needle.style.transform = 'rotate(10deg)'; }, 800);
+        setTimeout(() => { needle.style.transform = 'rotate(0deg)'; }, 1400);
+    }
+
+    function findNorth(area) {
+        if (area === 'north') {
+            const hallNorth = document.getElementById('hall-north');
+            hallNorth.classList.add('success');
+            hallNorth.innerText = '上厅 (北侧/尊)';
+            document.getElementById('s2-text').innerHTML = "辨认正确。<br>北侧祖堂为尊，南侧大门为卑。";
+            document.getElementById('btn-s2').classList.remove('disabled');
+        } else {
+            showAlert("坐北朝南，上方才是北侧哦");
+        }
+    }
+
+    // --- 场景3逻辑 ---
+    let selectedCharId = null;
+    let selectedCharEmoji = '';
+    let placedCount = 0;
+
+    function selectCharacter(id, emoji) {
+        document.querySelectorAll('.char-btn').forEach(btn => btn.classList.remove('selected'));
+        document.getElementById(`char-${id}`).classList.add('selected');
+        selectedCharId = id;
+        selectedCharEmoji = emoji;
+    }
+
+    function placeCharacter(seatType) {
+        if (!selectedCharId) {
+            showAlert("请先在下方选择人物");
+            return;
+        }
+
+        if ((selectedCharId === 'agong' && seatType === 'north') || 
+            (selectedCharId === 'asun' && seatType === 'south')) {
+            
+            const seat = document.getElementById(`seat-${seatType}`);
+            seat.innerHTML = `<div style="font-size: 40px;">${selectedCharEmoji}</div>`;
+            seat.style.border = '2px solid #c1a272';
+            seat.style.background = '#2c251e';
+            seat.style.pointerEvents = 'none'; 
+            
+            const charBtn = document.getElementById(`char-${selectedCharId}`);
+            charBtn.classList.remove('selected');
+            charBtn.classList.add('hidden'); 
+            
+            selectedCharId = null;
+            placedCount++;
+            
+            if (placedCount === 2) {
+                document.getElementById('s3-text').innerHTML = "长幼归位，秩序井然。<br>可以开始摆放茶具了。";
+                document.getElementById('btn-s3').classList.remove('disabled');
+            }
+        } else {
+            showAlert("北尊南卑，长幼有序，请重试");
+        }
+    }
+
+    // --- 场景4逻辑 ---
+    let serveStep = 0; 
+
+    function serveTea(target) {
+        if (serveStep === 0 && target === 'north') {
+            const cup = document.getElementById('cup-north');
+            cup.classList.remove('target');
+            cup.classList.add('served');
+            cup.innerHTML = '🍵';
+            serveStep = 1;
+            
+            document.getElementById('cup-south').classList.add('target');
+            
+        } else if (serveStep === 1 && target === 'south') {
+            const cup = document.getElementById('cup-south');
+            cup.classList.remove('target');
+            cup.classList.add('served');
+            cup.innerHTML = '🍵';
+            serveStep = 2;
+            
+            document.getElementById('s4-text').innerHTML = "敬茶礼成，满堂茶香。<br>规矩与敬意，在一盏茶中传承。";
+            document.getElementById('btn-s4').classList.remove('disabled');
+            
+        } else {
+            const cup = document.getElementById(`cup-${target}`);
+            cup.style.transform = 'translateX(-5px)';
+            setTimeout(() => cup.style.transform = 'translateX(5px)', 50);
+            setTimeout(() => cup.style.transform = 'translateX(0)', 100);
+            showAlert("先敬祖，再敬长");
+        }
+    }
+
+    function goToChapter(url) {
+        window.location.href = url;
+    }
+</script>
+</body>
+</html>
