@@ -187,6 +187,38 @@
 <script>
     let videoStream = null;
     const bgm = document.getElementById('bgm');
+    const BGM_STATE_KEY = 'tea_story_bgm_state_v1';
+    let bgmSaveTimer = null;
+
+    function saveBgmState() {
+        if (!bgm || Number.isNaN(bgm.currentTime)) {
+            return;
+        }
+        const state = {
+            time: bgm.currentTime,
+            updatedAt: Date.now()
+        };
+        localStorage.setItem(BGM_STATE_KEY, JSON.stringify(state));
+    }
+
+    function restoreBgmState() {
+        if (!bgm) {
+            return;
+        }
+        const raw = localStorage.getItem(BGM_STATE_KEY);
+        if (!raw) {
+            return;
+        }
+        try {
+            const state = JSON.parse(raw);
+            if (state && typeof state.time === 'number' && state.time >= 0) {
+                const resumeTime = bgm.duration ? (state.time % bgm.duration) : state.time;
+                bgm.currentTime = resumeTime;
+            }
+        } catch (_) {
+            // ignore malformed storage data
+        }
+    }
 
     function ensureBgmPlayback() {
         if (!bgm) {
@@ -200,10 +232,22 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        if (bgm) {
+            bgm.addEventListener('loadedmetadata', restoreBgmState, { once: true });
+        }
         ensureBgmPlayback();
+        bgmSaveTimer = setInterval(saveBgmState, 1000);
         ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((eventName) => {
             document.addEventListener(eventName, ensureBgmPlayback, { once: true });
         });
+    });
+
+    window.addEventListener('pagehide', saveBgmState);
+    window.addEventListener('beforeunload', saveBgmState);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            saveBgmState();
+        }
     });
 
     function nextScene(current) {
@@ -291,6 +335,10 @@
     }
 
     function goToChapter(url) {
+        saveBgmState();
+        if (bgmSaveTimer) {
+            clearInterval(bgmSaveTimer);
+        }
         window.location.href = url;
     }
 </script>
