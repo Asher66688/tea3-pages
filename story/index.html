@@ -7,59 +7,19 @@
 <style>
     body, html { margin: 0; padding: 0; height: 100%; background: #1a1a1a; overflow: hidden; }
     #shell { max-width: 480px; height: 100vh; margin: 0 auto; position: relative; background: #111; box-shadow: 0 0 20px rgba(0, 0, 0, 0.45); }
-    #chapter-frame { width: 100%; height: 100%; border: none; display: block; background: #111; pointer-events: none; }
-    #start-overlay {
-        position: absolute;
-        inset: 0;
-        z-index: 1100;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.82));
-    }
-    #start-btn {
-        border: 1px solid rgba(255, 255, 255, 0.45);
-        background: rgba(0, 0, 0, 0.72);
-        color: #fff;
-        border-radius: 999px;
-        padding: 12px 22px;
-        font-size: 15px;
-        cursor: pointer;
-    }
-    #audio-unlock {
-        position: absolute;
-        left: 50%;
-        bottom: 18px;
-        transform: translateX(-50%);
-        z-index: 1000;
-        background: rgba(0, 0, 0, 0.76);
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        color: #fff;
-        border-radius: 999px;
-        padding: 10px 18px;
-        font-size: 14px;
-        cursor: pointer;
-        display: none;
-    }
+    #chapter-frame { width: 100%; height: 100%; border: none; display: block; background: #111; }
 </style>
 </head>
 <body>
 <div id="shell">
     <audio id="global-bgm" src="./assets/Leaves_Unfolding_at_Daybreak.mp3" loop preload="auto" playsinline></audio>
     <iframe id="chapter-frame" title="客家茶故事章节" allow="autoplay; camera"></iframe>
-    <div id="start-overlay">
-        <button id="start-btn" type="button">点击进入故事并开启音乐</button>
-    </div>
-    <button id="audio-unlock" type="button">点击开启背景音乐</button>
 </div>
 
 <script>
     const frame = document.getElementById('chapter-frame');
     const globalBgm = document.getElementById('global-bgm');
-    const startOverlay = document.getElementById('start-overlay');
-    const startBtn = document.getElementById('start-btn');
-    const unlockBtn = document.getElementById('audio-unlock');
-    let isStoryStarted = false;
+    let autoplayRetryTimer = null;
 
     const chapterMap = {
         ch1: './tea1_public.html?embed=1',
@@ -73,25 +33,27 @@
         if (playPromise && typeof playPromise.catch === 'function') {
             playPromise
                 .then(() => {
-                    unlockBtn.style.display = 'none';
+                    if (autoplayRetryTimer) {
+                        clearInterval(autoplayRetryTimer);
+                        autoplayRetryTimer = null;
+                    }
                 })
-                .catch(() => {
-                    unlockBtn.style.display = 'block';
-                });
-        } else {
-            unlockBtn.style.display = 'none';
+                .catch(() => {});
         }
     }
 
-    function startStoryWithAudio() {
-        if (isStoryStarted) {
-            ensureBgmPlayback();
+    function startAutoplayRetry() {
+        if (autoplayRetryTimer) {
             return;
         }
-        isStoryStarted = true;
-        ensureBgmPlayback();
-        frame.style.pointerEvents = 'auto';
-        startOverlay.style.display = 'none';
+        autoplayRetryTimer = setInterval(() => {
+            if (!globalBgm.paused) {
+                clearInterval(autoplayRetryTimer);
+                autoplayRetryTimer = null;
+                return;
+            }
+            ensureBgmPlayback();
+        }, 1200);
     }
 
     function resolveChapterByUrl(url) {
@@ -137,11 +99,17 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        ensureBgmPlayback();
+        startAutoplayRetry();
         ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((eventName) => {
             document.addEventListener(eventName, ensureBgmPlayback, { once: true });
         });
-        unlockBtn.addEventListener('click', ensureBgmPlayback);
-        startBtn.addEventListener('click', startStoryWithAudio);
+        frame.addEventListener('load', ensureBgmPlayback);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                ensureBgmPlayback();
+            }
+        });
 
         const initial = window.location.hash.replace('#', '') || 'ch1';
         navigateToChapter(initial);
