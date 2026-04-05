@@ -159,8 +159,35 @@
     let grindProgress = 0;
     const bgm = document.getElementById('bgm');
     const BGM_STATE_KEY = 'tea_story_bgm_state_v1';
+    const BGM_SESSION_KEY = 'tea_story_bgm_session_v1';
     let bgmSaveTimer = null;
     let bgmStateReady = false;
+    let pendingResumeTime = 0;
+
+    function readResumeTime() {
+        const params = new URLSearchParams(window.location.search);
+        const queryTime = Number(params.get('bgm_t'));
+        if (!Number.isNaN(queryTime) && queryTime >= 0) {
+            return queryTime;
+        }
+        const sessionTime = Number(sessionStorage.getItem(BGM_SESSION_KEY));
+        if (!Number.isNaN(sessionTime) && sessionTime >= 0) {
+            return sessionTime;
+        }
+        const raw = localStorage.getItem(BGM_STATE_KEY);
+        if (!raw) {
+            return 0;
+        }
+        try {
+            const state = JSON.parse(raw);
+            if (state && typeof state.time === 'number' && state.time >= 0) {
+                return state.time;
+            }
+        } catch (_) {
+            return 0;
+        }
+        return 0;
+    }
 
     function saveBgmState() {
         if (!bgm || !bgmStateReady || Number.isNaN(bgm.currentTime)) {
@@ -171,6 +198,7 @@
             updatedAt: Date.now()
         };
         localStorage.setItem(BGM_STATE_KEY, JSON.stringify(state));
+        sessionStorage.setItem(BGM_SESSION_KEY, String(bgm.currentTime));
     }
 
     function restoreBgmState() {
@@ -178,24 +206,15 @@
             bgmStateReady = true;
             return;
         }
-        const raw = localStorage.getItem(BGM_STATE_KEY);
-        if (!raw) {
-            bgmStateReady = true;
-            return;
-        }
-        try {
-            const state = JSON.parse(raw);
-            if (state && typeof state.time === 'number' && state.time >= 0) {
-                const resumeTime = bgm.duration ? (state.time % bgm.duration) : state.time;
-                bgm.currentTime = resumeTime;
-            }
-        } catch (_) {
-            // ignore malformed storage data
+        const resumeTime = bgm.duration ? (pendingResumeTime % bgm.duration) : pendingResumeTime;
+        if (!Number.isNaN(resumeTime) && resumeTime >= 0) {
+            bgm.currentTime = resumeTime;
         }
         bgmStateReady = true;
     }
 
     function prepareBgmState() {
+        pendingResumeTime = readResumeTime();
         if (!bgm) {
             bgmStateReady = true;
             return;
@@ -220,7 +239,14 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         prepareBgmState();
-        ensureBgmPlayback();
+        const startPlayback = () => {
+            if (!bgmStateReady) {
+                setTimeout(startPlayback, 30);
+                return;
+            }
+            ensureBgmPlayback();
+        };
+        startPlayback();
         bgmSaveTimer = setInterval(saveBgmState, 800);
         ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((eventName) => {
             document.addEventListener(eventName, ensureBgmPlayback, { once: true });
@@ -269,7 +295,11 @@
         if (bgmSaveTimer) {
             clearInterval(bgmSaveTimer);
         }
-        window.location.href = url;
+        const resumeTime = (!bgm || Number.isNaN(bgm.currentTime)) ? 0 : bgm.currentTime;
+        sessionStorage.setItem(BGM_SESSION_KEY, String(resumeTime));
+        const target = new URL(url, window.location.href);
+        target.searchParams.set('bgm_t', resumeTime.toFixed(3));
+        window.location.href = target.toString();
     }
 </script>
 </body>
