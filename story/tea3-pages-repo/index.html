@@ -75,6 +75,7 @@
 <body>
 
 <div id="app">
+    <audio id="bgm" src="../assets/Leaves_Unfolding_at_Daybreak.mp3" loop preload="auto" playsinline></audio>
     <div id="camera-container">
         <video id="camera-feed" autoplay playsinline muted></video>
         <div class="camera-overlay"></div>
@@ -185,6 +186,25 @@
 
 <script>
     let videoStream = null;
+    const bgm = document.getElementById('bgm');
+
+    function ensureBgmPlayback() {
+        if (!bgm) {
+            return;
+        }
+        bgm.volume = 0.65;
+        const playPromise = bgm.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        ensureBgmPlayback();
+        ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((eventName) => {
+            document.addEventListener(eventName, ensureBgmPlayback, { once: true });
+        });
+    });
 
     function nextScene(current) {
         document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));

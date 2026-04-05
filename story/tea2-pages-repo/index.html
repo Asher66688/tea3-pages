@@ -92,6 +92,7 @@
 <body>
 
 <div id="app">
+    <audio id="bgm" src="../assets/Leaves_Unfolding_at_Daybreak.mp3" loop preload="auto" playsinline></audio>
     <div class="alert-msg" id="global-alert">提示信息</div>
 
     <div id="scene1" class="scene active">
@@ -200,6 +201,26 @@
 </div>
 
 <script>
+    const bgm = document.getElementById('bgm');
+
+    function ensureBgmPlayback() {
+        if (!bgm) {
+            return;
+        }
+        bgm.volume = 0.65;
+        const playPromise = bgm.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        ensureBgmPlayback();
+        ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((eventName) => {
+            document.addEventListener(eventName, ensureBgmPlayback, { once: true });
+        });
+    });
+
     function nextScene(current) {
         document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
         document.getElementById(`scene${current+1}`).classList.add('active');
