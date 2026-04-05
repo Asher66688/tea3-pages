@@ -160,9 +160,10 @@
     const bgm = document.getElementById('bgm');
     const BGM_STATE_KEY = 'tea_story_bgm_state_v1';
     let bgmSaveTimer = null;
+    let bgmStateReady = false;
 
     function saveBgmState() {
-        if (!bgm || Number.isNaN(bgm.currentTime)) {
+        if (!bgm || !bgmStateReady || Number.isNaN(bgm.currentTime)) {
             return;
         }
         const state = {
@@ -174,10 +175,12 @@
 
     function restoreBgmState() {
         if (!bgm) {
+            bgmStateReady = true;
             return;
         }
         const raw = localStorage.getItem(BGM_STATE_KEY);
         if (!raw) {
+            bgmStateReady = true;
             return;
         }
         try {
@@ -189,6 +192,19 @@
         } catch (_) {
             // ignore malformed storage data
         }
+        bgmStateReady = true;
+    }
+
+    function prepareBgmState() {
+        if (!bgm) {
+            bgmStateReady = true;
+            return;
+        }
+        if (bgm.readyState >= 1) {
+            restoreBgmState();
+            return;
+        }
+        bgm.addEventListener('loadedmetadata', restoreBgmState, { once: true });
     }
 
     function ensureBgmPlayback() {
@@ -203,11 +219,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        if (bgm) {
-            bgm.addEventListener('loadedmetadata', restoreBgmState, { once: true });
-        }
+        prepareBgmState();
         ensureBgmPlayback();
-        bgmSaveTimer = setInterval(saveBgmState, 1000);
+        bgmSaveTimer = setInterval(saveBgmState, 800);
         ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((eventName) => {
             document.addEventListener(eventName, ensureBgmPlayback, { once: true });
         });
