@@ -272,8 +272,21 @@
         }
     }
 
+    function notifyParentUnlockAudio() {
+        if (!isEmbeddedStory) {
+            return;
+        }
+        try {
+            window.parent.postMessage({ type: 'tea-story-unlock-audio' }, '*');
+        } catch (_) {}
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         if (isEmbeddedStory) {
+            notifyParentUnlockAudio();
+            ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((eventName) => {
+                document.addEventListener(eventName, notifyParentUnlockAudio, { once: true });
+            });
             return;
         }
         prepareBgmState();
