@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>客家茶故事</title>
+<style>
+    body, html { margin: 0; padding: 0; height: 100%; background: #1a1a1a; overflow: hidden; }
+    #shell { max-width: 480px; height: 100vh; margin: 0 auto; position: relative; background: #111; box-shadow: 0 0 20px rgba(0, 0, 0, 0.45); }
+    #chapter-frame { width: 100%; height: 100%; border: none; display: block; background: #111; }
+</style>
+</head>
+<body>
+<div id="shell">
+    <audio id="global-bgm" src="./assets/Leaves_Unfolding_at_Daybreak.mp3" loop preload="auto" playsinline></audio>
+    <iframe id="chapter-frame" title="客家茶故事章节" allow="autoplay; camera"></iframe>
+</div>
+
+<script>
+    const frame = document.getElementById('chapter-frame');
+    const globalBgm = document.getElementById('global-bgm');
+
+    const chapterMap = {
+        ch1: './tea1_public.html?embed=1',
+        ch2: './tea2-pages-repo/index.html?embed=1',
+        ch3: './tea3-pages-repo/index.html?embed=1'
+    };
+
+    function ensureBgmPlayback() {
+        globalBgm.volume = 0.65;
+        const playPromise = globalBgm.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+        }
+    }
+
+    function resolveChapterByUrl(url) {
+        if (!url) {
+            return null;
+        }
+        const value = String(url).toLowerCase();
+        if (value.includes('tea2-pages-repo')) {
+            return 'ch2';
+        }
+        if (value.includes('tea3-pages-repo')) {
+            return 'ch3';
+        }
+        if (value.includes('tea1_public')) {
+            return 'ch1';
+        }
+        return null;
+    }
+
+    function navigateToChapter(chapterKey) {
+        const key = chapterMap[chapterKey] ? chapterKey : 'ch1';
+        frame.src = chapterMap[key];
+        if (window.location.hash !== `#${key}`) {
+            history.replaceState(null, '', `#${key}`);
+        }
+    }
+
+    window.__teaStoryNavigate = function(url) {
+        const chapterKey = resolveChapterByUrl(url) || 'ch1';
+        navigateToChapter(chapterKey);
+    };
+
+    window.addEventListener('hashchange', () => {
+        const hash = window.location.hash.replace('#', '');
+        navigateToChapter(hash || 'ch1');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        ensureBgmPlayback();
+        ['pointerdown', 'touchstart', 'click', 'keydown'].forEach((eventName) => {
+            document.addEventListener(eventName, ensureBgmPlayback, { once: true });
+        });
+
+        const initial = window.location.hash.replace('#', '') || 'ch1';
+        navigateToChapter(initial);
+    });
+</script>
+</body>
+</html>

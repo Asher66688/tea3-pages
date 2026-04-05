@@ -185,6 +185,12 @@
 </div>
 
 <script>
+    const isEmbeddedStory = window.self !== window.top && new URLSearchParams(window.location.search).get('embed') === '1';
+
+    if (!isEmbeddedStory && window.self === window.top && !new URLSearchParams(window.location.search).has('standalone')) {
+        window.location.replace('../index.html#ch3');
+    }
+
     let videoStream = null;
     const bgm = document.getElementById('bgm');
     const BGM_STATE_KEY = 'tea_story_bgm_state_v1';
@@ -267,6 +273,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        if (isEmbeddedStory) {
+            return;
+        }
         prepareBgmState();
         const startPlayback = () => {
             if (!bgmStateReady) {
@@ -375,6 +384,14 @@
     }
 
     function goToChapter(url) {
+        if (isEmbeddedStory) {
+            try {
+                if (window.parent && typeof window.parent.__teaStoryNavigate === 'function') {
+                    window.parent.__teaStoryNavigate(url);
+                    return;
+                }
+            } catch (_) {}
+        }
         saveBgmState();
         if (bgmSaveTimer) {
             clearInterval(bgmSaveTimer);
