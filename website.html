@@ -179,6 +179,10 @@
             line-height: 1.35;
         }
 
+        .admin-hidden {
+            display: none !important;
+        }
+
         /* ================= Pre-visit: Hero Section ================= */
         .hero {
             height: 100vh;
@@ -554,10 +558,10 @@
         <a href="#" class="logo">Pollok Eco-Legacy</a>
     </nav>
 
-    <button id="hero-bg-entry" class="hero-bg-entry" type="button" aria-controls="hero-bg-panel" aria-expanded="false">
+    <button id="hero-bg-entry" class="hero-bg-entry admin-hidden" type="button" aria-controls="hero-bg-panel" aria-expanded="false">
         Update Hero Background
     </button>
-    <div id="hero-bg-panel" class="hero-bg-panel" hidden>
+    <div id="hero-bg-panel" class="hero-bg-panel admin-hidden" hidden>
         <h3>Hero Background</h3>
         <p>Upload a new photo to instantly replace the main hero background.</p>
         <div class="hero-bg-actions">
@@ -706,6 +710,7 @@
             branch: "master",
             path: "hero-background.jpg"
         };
+        const heroAdminModeKey = "pollokHeroAdminMode";
         const heroAutoPublishKey = "pollokHeroAutoPublish";
         const heroRememberTokenKey = "pollokHeroRememberToken";
         const heroGitHubTokenKey = "pollokHeroGitHubToken";
@@ -765,6 +770,35 @@
             }
 
             await tryLoadPublishedHeroBackground();
+        }
+
+        function setAdminMode(enabled) {
+            try {
+                localStorage.setItem(heroAdminModeKey, enabled ? "true" : "false");
+            } catch (error) {
+                // Ignore local storage write errors.
+            }
+        }
+
+        function loadAdminModePreference() {
+            try {
+                return localStorage.getItem(heroAdminModeKey) === "true";
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function initializeHeroAdminMode() {
+            const params = new URLSearchParams(window.location.search);
+            const adminParam = params.get("admin");
+
+            if (adminParam === "1") {
+                setAdminMode(true);
+            } else if (adminParam === "0") {
+                setAdminMode(false);
+            }
+
+            return loadAdminModePreference();
         }
 
         function toDataUrl(file) {
@@ -1038,6 +1072,7 @@
         const heroGhTokenInput = document.getElementById("hero-gh-token");
         const heroGhRememberInput = document.getElementById("hero-gh-remember");
         const heroGhAutoInput = document.getElementById("hero-gh-auto");
+        const heroAdminEnabled = initializeHeroAdminMode();
 
         function escapeHtml(value) {
             return value
@@ -1075,7 +1110,16 @@
             };
         }
 
+        if (heroAdminEnabled) {
+            heroBgEntry.classList.remove("admin-hidden");
+            heroBgPanel.classList.remove("admin-hidden");
+        }
+
         heroBgEntry.addEventListener("click", function () {
+            if (!heroAdminEnabled) {
+                return;
+            }
+
             const isHidden = heroBgPanel.hidden;
             heroBgPanel.hidden = !isHidden;
             heroBgEntry.setAttribute("aria-expanded", isHidden ? "true" : "false");
@@ -1085,6 +1129,10 @@
         });
 
         heroBgUploadInput.addEventListener("change", async function () {
+            if (!heroAdminEnabled) {
+                return;
+            }
+
             const file = heroBgUploadInput.files && heroBgUploadInput.files[0];
 
             if (!file) {
@@ -1155,6 +1203,10 @@
         });
 
         heroBgResetButton.addEventListener("click", function () {
+            if (!heroAdminEnabled) {
+                return;
+            }
+
             try {
                 localStorage.removeItem(heroStorageKey);
             } catch (error) {
@@ -1165,6 +1217,10 @@
         });
 
         heroGhRememberInput.addEventListener("change", function () {
+            if (!heroAdminEnabled) {
+                return;
+            }
+
             const rememberToken = heroGhRememberInput.checked;
             saveRememberTokenPreference(rememberToken);
 
@@ -1175,6 +1231,10 @@
         });
 
         heroGhTokenInput.addEventListener("blur", function () {
+            if (!heroAdminEnabled) {
+                return;
+            }
+
             const token = heroGhTokenInput.value.trim();
             if (heroGhRememberInput.checked && token) {
                 saveGitHubToken(token);
