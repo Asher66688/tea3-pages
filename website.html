@@ -47,6 +47,145 @@
         .logo { font-size: 24px; font-weight: 800; color: var(--text-light); transition: color 0.3s; text-decoration: none;}
         nav.scrolled .logo { color: var(--primary-green); }
 
+        /* Hero background quick uploader */
+        .hero-bg-entry {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 140;
+            border: none;
+            border-radius: 999px;
+            background: var(--primary-green);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 11px 16px;
+            cursor: pointer;
+            box-shadow: 0 10px 18px rgba(44, 95, 45, 0.28);
+        }
+
+        .hero-bg-panel {
+            position: fixed;
+            right: 18px;
+            bottom: 66px;
+            z-index: 140;
+            width: min(330px, calc(100vw - 36px));
+            background: #ffffff;
+            border: 1px solid #c8d9b7;
+            border-radius: 14px;
+            box-shadow: 0 16px 26px rgba(36, 79, 37, 0.2);
+            padding: 14px;
+            text-align: left;
+        }
+
+        .hero-bg-panel h3 {
+            margin: 0 0 8px;
+            color: #2d4f2f;
+            font-size: 1rem;
+        }
+
+        .hero-bg-panel p {
+            margin: 0 0 10px;
+            color: #5f6e5f;
+            font-size: 0.84rem;
+            line-height: 1.4;
+        }
+
+        .hero-bg-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .hero-bg-upload,
+        .hero-bg-reset {
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .hero-bg-upload {
+            border: 1px solid #c8d9b7;
+            background: #f7fbf1;
+            color: #244f25;
+            flex: 1;
+            text-align: center;
+        }
+
+        .hero-bg-reset {
+            border: 1px solid #d6dfcc;
+            background: #fff;
+            color: #5f6e5f;
+        }
+
+        .hero-bg-status {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #3d5e3f;
+            min-height: 1.2em;
+        }
+
+        .hero-bg-github {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #d6dfcc;
+        }
+
+        .hero-bg-github-title {
+            margin: 0 0 8px;
+            color: #2d4f2f;
+            font-size: 0.84rem;
+            font-weight: 800;
+        }
+
+        .hero-bg-input,
+        .hero-bg-inline-input {
+            width: 100%;
+            border: 1px solid #c8d9b7;
+            border-radius: 8px;
+            padding: 7px 8px;
+            font-size: 0.82rem;
+            color: #2a3e2a;
+            background: #fff;
+            outline: none;
+        }
+
+        .hero-bg-input:focus,
+        .hero-bg-inline-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(151, 188, 98, 0.2);
+        }
+
+        .hero-bg-grid {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .hero-bg-path {
+            margin-top: 8px;
+        }
+
+        .hero-bg-checkline {
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #476047;
+            font-size: 0.82rem;
+            user-select: none;
+        }
+
+        .hero-bg-help {
+            margin: 6px 0 0;
+            color: #6e7f6f;
+            font-size: 0.76rem;
+            line-height: 1.35;
+        }
+
         /* ================= Pre-visit: Hero Section ================= */
         .hero {
             height: 100vh;
@@ -411,6 +550,8 @@
             .locator-card { padding: 30px 20px; }
             .locator-result { line-height: 1.5; }
             .hero h1 { font-size: 2.5rem; }
+            .hero-bg-entry { right: 12px; bottom: 12px; padding: 10px 14px; }
+            .hero-bg-panel { right: 12px; bottom: 56px; width: min(330px, calc(100vw - 24px)); }
         }
     </style>
 </head>
@@ -419,6 +560,35 @@
     <nav id="navbar">
         <a href="#" class="logo">Pollok Eco-Legacy</a>
     </nav>
+
+    <button id="hero-bg-entry" class="hero-bg-entry" type="button" aria-controls="hero-bg-panel" aria-expanded="false">
+        Update Hero Background
+    </button>
+    <div id="hero-bg-panel" class="hero-bg-panel" hidden>
+        <h3>Hero Background</h3>
+        <p>Upload a new photo to instantly replace the main hero background.</p>
+        <div class="hero-bg-actions">
+            <label class="hero-bg-upload" for="hero-bg-upload-input">Upload Photo</label>
+            <input id="hero-bg-upload-input" type="file" accept="image/*" hidden>
+            <button id="hero-bg-reset" class="hero-bg-reset" type="button">Reset</button>
+        </div>
+        <div class="hero-bg-github">
+            <p class="hero-bg-github-title">Auto Publish to GitHub</p>
+            <input id="hero-gh-token" class="hero-bg-input" type="password" placeholder="GitHub token (Contents: Read and Write)">
+            <div class="hero-bg-grid">
+                <input id="hero-gh-owner" class="hero-bg-inline-input" type="text" placeholder="Owner">
+                <input id="hero-gh-repo" class="hero-bg-inline-input" type="text" placeholder="Repo">
+                <input id="hero-gh-branch" class="hero-bg-inline-input" type="text" placeholder="Branch">
+                <input id="hero-gh-path" class="hero-bg-inline-input" type="text" placeholder="Image path">
+            </div>
+            <label class="hero-bg-checkline">
+                <input id="hero-gh-auto" type="checkbox">
+                Auto submit to GitHub after upload
+            </label>
+            <p class="hero-bg-help">Token is used only in your browser session. Owner/repo settings are saved locally.</p>
+        </div>
+        <p id="hero-bg-status" class="hero-bg-status" aria-live="polite"></p>
+    </div>
 
     <section class="hero">
         <h1>Every Green Step Grows a Legacy</h1>
@@ -535,6 +705,192 @@
     </section>
 
     <script>
+        const heroDefaultImageUrl = "https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80";
+        const heroStorageKey = "pollokHeroCustomBackground";
+        const heroGitHubSettingsKey = "pollokHeroGitHubUploaderSettings";
+        const heroImageMaxDimension = 1800;
+        const heroImageJpegQuality = 0.82;
+
+        function buildHeroBackground(url) {
+            return "linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.2)), url(\"" + url + "\")";
+        }
+
+        function setHeroBackground(url) {
+            const hero = document.querySelector(".hero");
+            if (!hero) {
+                return;
+            }
+            hero.style.backgroundImage = buildHeroBackground(url);
+        }
+
+        function loadSavedHeroBackground() {
+            try {
+                const savedBackground = localStorage.getItem(heroStorageKey);
+                if (savedBackground) {
+                    setHeroBackground(savedBackground);
+                }
+            } catch (error) {
+                // Ignore storage access errors in restrictive browser modes.
+            }
+        }
+
+        function toDataUrl(file) {
+            return new Promise(function (resolve, reject) {
+                const reader = new FileReader();
+                reader.onload = function () {
+                    resolve(String(reader.result || ""));
+                };
+                reader.onerror = function () {
+                    reject(new Error("Could not read the selected file."));
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadImage(dataUrl) {
+            return new Promise(function (resolve, reject) {
+                const image = new Image();
+                image.onload = function () {
+                    resolve(image);
+                };
+                image.onerror = function () {
+                    reject(new Error("Could not decode the selected image."));
+                };
+                image.src = dataUrl;
+            });
+        }
+
+        async function buildCompressedImageDataUrl(file) {
+            const originalDataUrl = await toDataUrl(file);
+            const image = await loadImage(originalDataUrl);
+            const maxSide = Math.max(image.width, image.height);
+            const resizeRatio = maxSide > heroImageMaxDimension ? (heroImageMaxDimension / maxSide) : 1;
+            const targetWidth = Math.max(1, Math.round(image.width * resizeRatio));
+            const targetHeight = Math.max(1, Math.round(image.height * resizeRatio));
+
+            const canvas = document.createElement("canvas");
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            const context = canvas.getContext("2d");
+            if (!context) {
+                throw new Error("Canvas is not available in this browser.");
+            }
+
+            context.drawImage(image, 0, 0, targetWidth, targetHeight);
+            return canvas.toDataURL("image/jpeg", heroImageJpegQuality);
+        }
+
+        function toBase64Payload(dataUrl) {
+            const separatorIndex = dataUrl.indexOf(",");
+            if (separatorIndex < 0) {
+                throw new Error("Invalid image payload.");
+            }
+            return dataUrl.slice(separatorIndex + 1);
+        }
+
+        function encodeGitHubPath(pathValue) {
+            return pathValue
+                .split("/")
+                .filter(function (segment) { return segment.length > 0; })
+                .map(function (segment) { return encodeURIComponent(segment); })
+                .join("/");
+        }
+
+        function normalizeGitHubSettings(rawSettings) {
+            return {
+                owner: (rawSettings.owner || "Asher66688").trim(),
+                repo: (rawSettings.repo || "tea3-pages").trim(),
+                branch: (rawSettings.branch || "master").trim(),
+                path: (rawSettings.path || "hero-background.jpg").trim().replace(/^\/+/, ""),
+                autoPublish: Boolean(rawSettings.autoPublish)
+            };
+        }
+
+        function loadGitHubSettings() {
+            try {
+                const rawText = localStorage.getItem(heroGitHubSettingsKey);
+                if (!rawText) {
+                    return normalizeGitHubSettings({ autoPublish: true });
+                }
+                const parsed = JSON.parse(rawText);
+                return normalizeGitHubSettings(parsed);
+            } catch (error) {
+                return normalizeGitHubSettings({ autoPublish: true });
+            }
+        }
+
+        function saveGitHubSettings(settings) {
+            try {
+                localStorage.setItem(heroGitHubSettingsKey, JSON.stringify(settings));
+            } catch (error) {
+                // Ignore local storage write errors.
+            }
+        }
+
+        async function getExistingGitHubFileSha(settings, token) {
+            const encodedPath = encodeGitHubPath(settings.path);
+            const queryBranch = encodeURIComponent(settings.branch);
+            const endpoint = "https://api.github.com/repos/" + settings.owner + "/" + settings.repo + "/contents/" + encodedPath + "?ref=" + queryBranch;
+            const response = await fetch(endpoint, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/vnd.github+json",
+                    "Authorization": "Bearer " + token
+                }
+            });
+
+            if (response.status === 404) {
+                return null;
+            }
+
+            if (!response.ok) {
+                const errorBody = await response.json().catch(function () { return {}; });
+                throw new Error(errorBody.message || "Could not query GitHub file state.");
+            }
+
+            const payload = await response.json();
+            return payload.sha || null;
+        }
+
+        async function publishBackgroundToGitHub(settings, token, contentBase64) {
+            const encodedPath = encodeGitHubPath(settings.path);
+            const endpoint = "https://api.github.com/repos/" + settings.owner + "/" + settings.repo + "/contents/" + encodedPath;
+            const currentSha = await getExistingGitHubFileSha(settings, token);
+
+            const body = {
+                message: "Update hero background image",
+                content: contentBase64,
+                branch: settings.branch
+            };
+
+            if (currentSha) {
+                body.sha = currentSha;
+            }
+
+            const response = await fetch(endpoint, {
+                method: "PUT",
+                headers: {
+                    "Accept": "application/vnd.github+json",
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.json().catch(function () { return {}; });
+                throw new Error(errorBody.message || "GitHub upload failed.");
+            }
+
+            return response.json();
+        }
+
+        function buildGitHubPagesImageUrl(settings) {
+            const cleanPath = settings.path.replace(/^\/+/, "");
+            return "https://" + settings.owner + ".github.io/" + settings.repo + "/" + encodeURI(cleanPath);
+        }
+
         // 1. Navbar scroll effect
         window.addEventListener('scroll', () => {
             const nav = document.getElementById('navbar');
@@ -614,6 +970,17 @@
         const stampVisualLabel = document.getElementById("stamp-visual-label");
         const stampVisualCount = document.getElementById("stamp-visual-count");
         const stampDots = document.getElementById("stamp-dots");
+        const heroBgEntry = document.getElementById("hero-bg-entry");
+        const heroBgPanel = document.getElementById("hero-bg-panel");
+        const heroBgUploadInput = document.getElementById("hero-bg-upload-input");
+        const heroBgResetButton = document.getElementById("hero-bg-reset");
+        const heroBgStatus = document.getElementById("hero-bg-status");
+        const heroGhTokenInput = document.getElementById("hero-gh-token");
+        const heroGhOwnerInput = document.getElementById("hero-gh-owner");
+        const heroGhRepoInput = document.getElementById("hero-gh-repo");
+        const heroGhBranchInput = document.getElementById("hero-gh-branch");
+        const heroGhPathInput = document.getElementById("hero-gh-path");
+        const heroGhAutoInput = document.getElementById("hero-gh-auto");
 
         function escapeHtml(value) {
             return value
@@ -640,6 +1007,111 @@
 
             stampVisual.hidden = false;
         }
+
+        function readGitHubSettingsFromInputs() {
+            return normalizeGitHubSettings({
+                owner: heroGhOwnerInput.value,
+                repo: heroGhRepoInput.value,
+                branch: heroGhBranchInput.value,
+                path: heroGhPathInput.value,
+                autoPublish: heroGhAutoInput.checked
+            });
+        }
+
+        heroBgEntry.addEventListener("click", function () {
+            const isHidden = heroBgPanel.hidden;
+            heroBgPanel.hidden = !isHidden;
+            heroBgEntry.setAttribute("aria-expanded", isHidden ? "true" : "false");
+            if (isHidden) {
+                heroBgStatus.textContent = "";
+            }
+        });
+
+        heroBgUploadInput.addEventListener("change", async function () {
+            const file = heroBgUploadInput.files && heroBgUploadInput.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            if (!file.type.startsWith("image/")) {
+                heroBgStatus.textContent = "Please choose an image file.";
+                return;
+            }
+
+            heroBgStatus.textContent = "Processing image...";
+
+            try {
+                const compressedDataUrl = await buildCompressedImageDataUrl(file);
+                setHeroBackground(compressedDataUrl);
+
+                let savedLocally = false;
+                try {
+                    localStorage.setItem(heroStorageKey, compressedDataUrl);
+                    savedLocally = true;
+                } catch (error) {
+                    savedLocally = false;
+                }
+
+                const githubSettings = readGitHubSettingsFromInputs();
+                saveGitHubSettings(githubSettings);
+
+                if (!githubSettings.autoPublish) {
+                    heroBgStatus.textContent = savedLocally
+                        ? "Background updated and saved on this device."
+                        : "Background updated, but local save failed. Try a smaller image.";
+                    return;
+                }
+
+                const token = heroGhTokenInput.value.trim();
+                if (!token) {
+                    heroBgStatus.textContent = "Background updated locally. Add a GitHub token to auto publish.";
+                    return;
+                }
+
+                if (!githubSettings.owner || !githubSettings.repo || !githubSettings.branch || !githubSettings.path) {
+                    heroBgStatus.textContent = "Background updated locally. Fill owner/repo/branch/path for GitHub publish.";
+                    return;
+                }
+
+                heroBgStatus.textContent = "Uploading to GitHub...";
+                const base64Payload = toBase64Payload(compressedDataUrl);
+                await publishBackgroundToGitHub(githubSettings, token, base64Payload);
+
+                const publishedUrl = buildGitHubPagesImageUrl(githubSettings) + "?v=" + Date.now();
+                setHeroBackground(publishedUrl);
+                try {
+                    localStorage.setItem(heroStorageKey, publishedUrl);
+                } catch (error) {
+                    // Ignore local save failures after successful publish.
+                }
+
+                heroBgStatus.textContent = "Background published to GitHub Pages.";
+            } catch (error) {
+                heroBgStatus.textContent = "Upload failed: " + (error.message || "Unknown error.");
+            } finally {
+                heroBgUploadInput.value = "";
+            }
+        });
+
+        heroBgResetButton.addEventListener("click", function () {
+            try {
+                localStorage.removeItem(heroStorageKey);
+            } catch (error) {
+                // Ignore storage access errors.
+            }
+            setHeroBackground(heroDefaultImageUrl);
+            heroBgStatus.textContent = "Default background restored.";
+        });
+
+        const initialGitHubSettings = loadGitHubSettings();
+        heroGhOwnerInput.value = initialGitHubSettings.owner;
+        heroGhRepoInput.value = initialGitHubSettings.repo;
+        heroGhBranchInput.value = initialGitHubSettings.branch;
+        heroGhPathInput.value = initialGitHubSettings.path;
+        heroGhAutoInput.checked = initialGitHubSettings.autoPublish;
+
+        loadSavedHeroBackground();
 
         treeLocatorForm.addEventListener("submit", function (event) {
             event.preventDefault();
