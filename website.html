@@ -140,8 +140,7 @@
             font-weight: 800;
         }
 
-        .hero-bg-input,
-        .hero-bg-inline-input {
+        .hero-bg-input {
             width: 100%;
             border: 1px solid #c8d9b7;
             border-radius: 8px;
@@ -152,21 +151,15 @@
             outline: none;
         }
 
-        .hero-bg-input:focus,
-        .hero-bg-inline-input:focus {
+        .hero-bg-input:focus {
             border-color: var(--primary-green);
             box-shadow: 0 0 0 3px rgba(151, 188, 98, 0.2);
         }
 
-        .hero-bg-grid {
+        .hero-bg-fixed {
             margin-top: 8px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .hero-bg-path {
-            margin-top: 8px;
+            color: #476047;
+            font-size: 0.8rem;
         }
 
         .hero-bg-checkline {
@@ -575,17 +568,12 @@
         <div class="hero-bg-github">
             <p class="hero-bg-github-title">Auto Publish to GitHub</p>
             <input id="hero-gh-token" class="hero-bg-input" type="password" placeholder="GitHub token (Contents: Read and Write)">
-            <div class="hero-bg-grid">
-                <input id="hero-gh-owner" class="hero-bg-inline-input" type="text" placeholder="Owner">
-                <input id="hero-gh-repo" class="hero-bg-inline-input" type="text" placeholder="Repo">
-                <input id="hero-gh-branch" class="hero-bg-inline-input" type="text" placeholder="Branch">
-                <input id="hero-gh-path" class="hero-bg-inline-input" type="text" placeholder="Image path">
-            </div>
+            <p class="hero-bg-fixed">Target: Asher66688/tea3-pages (master), file: hero-background.jpg</p>
             <label class="hero-bg-checkline">
                 <input id="hero-gh-auto" type="checkbox">
                 Auto submit to GitHub after upload
             </label>
-            <p class="hero-bg-help">Token is used only in your browser session. Owner/repo settings are saved locally.</p>
+            <p class="hero-bg-help">You only need to paste a token. Repository settings are fixed for this project.</p>
         </div>
         <p id="hero-bg-status" class="hero-bg-status" aria-live="polite"></p>
     </div>
@@ -707,7 +695,13 @@
     <script>
         const heroDefaultImageUrl = "https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80";
         const heroStorageKey = "pollokHeroCustomBackground";
-        const heroGitHubSettingsKey = "pollokHeroGitHubUploaderSettings";
+        const heroGitHubDefaults = {
+            owner: "Asher66688",
+            repo: "tea3-pages",
+            branch: "master",
+            path: "hero-background.jpg"
+        };
+        const heroAutoPublishKey = "pollokHeroAutoPublish";
         const heroImageMaxDimension = 1800;
         const heroImageJpegQuality = 0.82;
 
@@ -797,32 +791,18 @@
                 .join("/");
         }
 
-        function normalizeGitHubSettings(rawSettings) {
-            return {
-                owner: (rawSettings.owner || "Asher66688").trim(),
-                repo: (rawSettings.repo || "tea3-pages").trim(),
-                branch: (rawSettings.branch || "master").trim(),
-                path: (rawSettings.path || "hero-background.jpg").trim().replace(/^\/+/, ""),
-                autoPublish: Boolean(rawSettings.autoPublish)
-            };
-        }
-
-        function loadGitHubSettings() {
+        function loadAutoPublishPreference() {
             try {
-                const rawText = localStorage.getItem(heroGitHubSettingsKey);
-                if (!rawText) {
-                    return normalizeGitHubSettings({ autoPublish: true });
-                }
-                const parsed = JSON.parse(rawText);
-                return normalizeGitHubSettings(parsed);
+                const raw = localStorage.getItem(heroAutoPublishKey);
+                return raw !== "false";
             } catch (error) {
-                return normalizeGitHubSettings({ autoPublish: true });
+                return true;
             }
         }
 
-        function saveGitHubSettings(settings) {
+        function saveAutoPublishPreference(enabled) {
             try {
-                localStorage.setItem(heroGitHubSettingsKey, JSON.stringify(settings));
+                localStorage.setItem(heroAutoPublishKey, enabled ? "true" : "false");
             } catch (error) {
                 // Ignore local storage write errors.
             }
@@ -976,10 +956,6 @@
         const heroBgResetButton = document.getElementById("hero-bg-reset");
         const heroBgStatus = document.getElementById("hero-bg-status");
         const heroGhTokenInput = document.getElementById("hero-gh-token");
-        const heroGhOwnerInput = document.getElementById("hero-gh-owner");
-        const heroGhRepoInput = document.getElementById("hero-gh-repo");
-        const heroGhBranchInput = document.getElementById("hero-gh-branch");
-        const heroGhPathInput = document.getElementById("hero-gh-path");
         const heroGhAutoInput = document.getElementById("hero-gh-auto");
 
         function escapeHtml(value) {
@@ -1009,13 +985,13 @@
         }
 
         function readGitHubSettingsFromInputs() {
-            return normalizeGitHubSettings({
-                owner: heroGhOwnerInput.value,
-                repo: heroGhRepoInput.value,
-                branch: heroGhBranchInput.value,
-                path: heroGhPathInput.value,
+            return {
+                owner: heroGitHubDefaults.owner,
+                repo: heroGitHubDefaults.repo,
+                branch: heroGitHubDefaults.branch,
+                path: heroGitHubDefaults.path,
                 autoPublish: heroGhAutoInput.checked
-            });
+            };
         }
 
         heroBgEntry.addEventListener("click", function () {
@@ -1054,7 +1030,7 @@
                 }
 
                 const githubSettings = readGitHubSettingsFromInputs();
-                saveGitHubSettings(githubSettings);
+                saveAutoPublishPreference(githubSettings.autoPublish);
 
                 if (!githubSettings.autoPublish) {
                     heroBgStatus.textContent = savedLocally
@@ -1066,11 +1042,6 @@
                 const token = heroGhTokenInput.value.trim();
                 if (!token) {
                     heroBgStatus.textContent = "Background updated locally. Add a GitHub token to auto publish.";
-                    return;
-                }
-
-                if (!githubSettings.owner || !githubSettings.repo || !githubSettings.branch || !githubSettings.path) {
-                    heroBgStatus.textContent = "Background updated locally. Fill owner/repo/branch/path for GitHub publish.";
                     return;
                 }
 
@@ -1104,12 +1075,7 @@
             heroBgStatus.textContent = "Default background restored.";
         });
 
-        const initialGitHubSettings = loadGitHubSettings();
-        heroGhOwnerInput.value = initialGitHubSettings.owner;
-        heroGhRepoInput.value = initialGitHubSettings.repo;
-        heroGhBranchInput.value = initialGitHubSettings.branch;
-        heroGhPathInput.value = initialGitHubSettings.path;
-        heroGhAutoInput.checked = initialGitHubSettings.autoPublish;
+        heroGhAutoInput.checked = loadAutoPublishPreference();
 
         loadSavedHeroBackground();
 
