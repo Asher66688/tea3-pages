@@ -698,6 +698,7 @@
 
     <script>
         const heroDefaultImageUrl = "https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80";
+        const heroPublishedImagePath = "hero-background.jpg";
         const heroStorageKey = "pollokHeroCustomBackground";
         const heroGitHubDefaults = {
             owner: "Asher66688",
@@ -728,10 +729,42 @@
                 const savedBackground = localStorage.getItem(heroStorageKey);
                 if (savedBackground) {
                     setHeroBackground(savedBackground);
+                    return true;
                 }
             } catch (error) {
                 // Ignore storage access errors in restrictive browser modes.
             }
+
+            return false;
+        }
+
+        async function tryLoadPublishedHeroBackground() {
+            try {
+                const probeUrl = heroPublishedImagePath + "?check=" + Date.now();
+                const response = await fetch(probeUrl, {
+                    method: "HEAD",
+                    cache: "no-store"
+                });
+
+                if (response.ok) {
+                    const cacheBustedUrl = heroPublishedImagePath + "?v=" + Date.now();
+                    setHeroBackground(cacheBustedUrl);
+                    return true;
+                }
+            } catch (error) {
+                // Ignore network errors and keep default hero image.
+            }
+
+            return false;
+        }
+
+        async function initializeHeroBackground() {
+            const loadedLocal = loadSavedHeroBackground();
+            if (loadedLocal) {
+                return;
+            }
+
+            await tryLoadPublishedHeroBackground();
         }
 
         function toDataUrl(file) {
@@ -1154,7 +1187,7 @@
             heroGhTokenInput.value = loadSavedGitHubToken();
         }
 
-        loadSavedHeroBackground();
+        initializeHeroBackground();
 
         treeLocatorForm.addEventListener("submit", function (event) {
             event.preventDefault();
