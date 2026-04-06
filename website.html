@@ -570,10 +570,14 @@
             <input id="hero-gh-token" class="hero-bg-input" type="password" placeholder="GitHub token (Contents: Read and Write)">
             <p class="hero-bg-fixed">Target: Asher66688/tea3-pages (master), file: hero-background.jpg</p>
             <label class="hero-bg-checkline">
+                <input id="hero-gh-remember" type="checkbox">
+                Remember token on this device
+            </label>
+            <label class="hero-bg-checkline">
                 <input id="hero-gh-auto" type="checkbox">
                 Auto submit to GitHub after upload
             </label>
-            <p class="hero-bg-help">You only need to paste a token. Repository settings are fixed for this project.</p>
+            <p class="hero-bg-help">You only need to paste a token once. Repository settings are fixed for this project.</p>
         </div>
         <p id="hero-bg-status" class="hero-bg-status" aria-live="polite"></p>
     </div>
@@ -702,6 +706,8 @@
             path: "hero-background.jpg"
         };
         const heroAutoPublishKey = "pollokHeroAutoPublish";
+        const heroRememberTokenKey = "pollokHeroRememberToken";
+        const heroGitHubTokenKey = "pollokHeroGitHubToken";
         const heroImageMaxDimension = 1800;
         const heroImageJpegQuality = 0.82;
 
@@ -803,6 +809,47 @@
         function saveAutoPublishPreference(enabled) {
             try {
                 localStorage.setItem(heroAutoPublishKey, enabled ? "true" : "false");
+            } catch (error) {
+                // Ignore local storage write errors.
+            }
+        }
+
+        function loadRememberTokenPreference() {
+            try {
+                const raw = localStorage.getItem(heroRememberTokenKey);
+                return raw !== "false";
+            } catch (error) {
+                return true;
+            }
+        }
+
+        function saveRememberTokenPreference(enabled) {
+            try {
+                localStorage.setItem(heroRememberTokenKey, enabled ? "true" : "false");
+            } catch (error) {
+                // Ignore local storage write errors.
+            }
+        }
+
+        function loadSavedGitHubToken() {
+            try {
+                return localStorage.getItem(heroGitHubTokenKey) || "";
+            } catch (error) {
+                return "";
+            }
+        }
+
+        function saveGitHubToken(token) {
+            try {
+                localStorage.setItem(heroGitHubTokenKey, token);
+            } catch (error) {
+                // Ignore local storage write errors.
+            }
+        }
+
+        function clearSavedGitHubToken() {
+            try {
+                localStorage.removeItem(heroGitHubTokenKey);
             } catch (error) {
                 // Ignore local storage write errors.
             }
@@ -956,6 +1003,7 @@
         const heroBgResetButton = document.getElementById("hero-bg-reset");
         const heroBgStatus = document.getElementById("hero-bg-status");
         const heroGhTokenInput = document.getElementById("hero-gh-token");
+        const heroGhRememberInput = document.getElementById("hero-gh-remember");
         const heroGhAutoInput = document.getElementById("hero-gh-auto");
 
         function escapeHtml(value) {
@@ -1031,6 +1079,15 @@
 
                 const githubSettings = readGitHubSettingsFromInputs();
                 saveAutoPublishPreference(githubSettings.autoPublish);
+                const token = heroGhTokenInput.value.trim();
+
+                const rememberToken = heroGhRememberInput.checked;
+                saveRememberTokenPreference(rememberToken);
+                if (rememberToken && token) {
+                    saveGitHubToken(token);
+                } else if (!rememberToken) {
+                    clearSavedGitHubToken();
+                }
 
                 if (!githubSettings.autoPublish) {
                     heroBgStatus.textContent = savedLocally
@@ -1039,7 +1096,6 @@
                     return;
                 }
 
-                const token = heroGhTokenInput.value.trim();
                 if (!token) {
                     heroBgStatus.textContent = "Background updated locally. Add a GitHub token to auto publish.";
                     return;
@@ -1075,7 +1131,28 @@
             heroBgStatus.textContent = "Default background restored.";
         });
 
+        heroGhRememberInput.addEventListener("change", function () {
+            const rememberToken = heroGhRememberInput.checked;
+            saveRememberTokenPreference(rememberToken);
+
+            if (!rememberToken) {
+                clearSavedGitHubToken();
+                heroGhTokenInput.value = "";
+            }
+        });
+
+        heroGhTokenInput.addEventListener("blur", function () {
+            const token = heroGhTokenInput.value.trim();
+            if (heroGhRememberInput.checked && token) {
+                saveGitHubToken(token);
+            }
+        });
+
         heroGhAutoInput.checked = loadAutoPublishPreference();
+        heroGhRememberInput.checked = loadRememberTokenPreference();
+        if (heroGhRememberInput.checked) {
+            heroGhTokenInput.value = loadSavedGitHubToken();
+        }
 
         loadSavedHeroBackground();
 
