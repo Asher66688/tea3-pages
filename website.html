@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pollok Eco-Legacy | Plant a Memory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Base Reset & Variables */
+        :root {
+            --primary-green: #2C5F2D;
+            --light-green: #97BC62;
+            --bg-color: #F9F8F3; 
+            --text-dark: #333333;
+            --text-light: #FFFFFF;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* Navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            transition: background 0.3s ease;
+        }
+        nav.scrolled {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .logo { font-size: 24px; font-weight: 800; color: var(--text-light); transition: color 0.3s; text-decoration: none;}
+        nav.scrolled .logo { color: var(--primary-green); }
+
+        /* ================= Pre-visit: Hero Section ================= */
+        .hero {
+            height: 100vh;
+            /* Parallax Background */
+            background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.2)), url('https://images.unsplash.com/photo-1448375240586-882707db888b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: var(--text-light);
+            padding: 0 20px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            font-weight: 800;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s ease forwards 0.5s;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1s ease forwards 0.8s;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            background-color: var(--light-green);
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            transition: transform 0.3s, background 0.3s;
+            opacity: 0;
+            animation: fadeUp 1s ease forwards 1.1s;
+        }
+        .btn:hover {
+            transform: translateY(-5px);
+            background-color: var(--primary-green);
+            color: var(--text-light);
+        }
+
+        /* ================= How it Works Section ================= */
+        .how-it-works {
+            padding: 100px 10vw 150px;
+            text-align: center;
+            background-color: var(--bg-color);
+        }
+
+        .how-it-works h2 {
+            color: var(--primary-green);
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+        }
+
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            max-width: 780px;
+            margin: 0 auto;
+        }
+
+        .step-card {
+            width: 100%;
+            background: white;
+            padding: 40px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .step-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .step-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .step-card h3 {
+            color: var(--primary-green);
+            margin-bottom: 15px;
+        }
+
+        /* ================= Post-visit: Digital Forest & Eco-Diary ================= */
+        .post-visit {
+            padding: 110px 5vw 100px;
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: var(--primary-green);
+            margin-bottom: 15px;
+        }
+        .section-subtitle {
+            color: #666;
+            margin-bottom: 60px;
+        }
+
+        /* Tree Cards Grid */
+        .tree-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Interactive Treedom-style Card */
+        .tree-card {
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .tree-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+
+        .card-img {
+            height: 250px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        /* Hover Overlay for Eco-Diary */
+        .card-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 95, 45, 0.9);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+            text-align: center;
+        }
+        .tree-card:hover .card-overlay { opacity: 1; }
+
+        .card-content {
+            padding: 25px;
+            text-align: left;
+        }
+
+        .card-content h3 { color: var(--primary-green); margin-bottom: 10px; }
+        .tag {
+            display: inline-block;
+            background: var(--bg-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--primary-green);
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        /* ================= My Tree Locator ================= */
+        .my-tree {
+            padding: 90px 6vw 120px;
+            background: linear-gradient(180deg, #f3f6ea 0%, #e7efda 100%);
+            text-align: center;
+        }
+
+        .locator-card {
+            max-width: 760px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 14px 36px rgba(44, 95, 45, 0.15);
+            padding: 36px 28px;
+        }
+
+        .locator-subtitle {
+            color: #4b5a4b;
+            margin: 10px 0 28px;
+        }
+
+        .locator-form {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .locator-input {
+            width: 320px;
+            max-width: 100%;
+            border: 1px solid #c8d9b7;
+            border-radius: 12px;
+            padding: 13px 14px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .locator-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 4px rgba(151, 188, 98, 0.25);
+        }
+
+        .locator-btn {
+            border: none;
+            border-radius: 12px;
+            padding: 13px 20px;
+            background: var(--primary-green);
+            color: #ffffff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .locator-btn:hover {
+            transform: translateY(-2px);
+            background: #244f25;
+        }
+
+        .locator-result {
+            margin-top: 20px;
+            min-height: 24px;
+            font-weight: 700;
+            color: var(--primary-green);
+            line-height: 1.55;
+        }
+
+        .coord-block {
+            display: inline-block;
+            margin-top: 6px;
+            font-weight: 800;
+        }
+
+        .locator-note {
+            margin-top: 14px;
+            color: #6f7d6f;
+            font-size: 0.9rem;
+        }
+
+        .stamp-visual {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #c8d9b7;
+            text-align: left;
+        }
+
+        .stamp-visual-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .stamp-visual-label {
+            margin: 0;
+            color: #345236;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .stamp-visual-count {
+            margin: 0;
+            color: var(--primary-green);
+            font-size: 0.88rem;
+            font-weight: 800;
+        }
+
+        .stamp-dots {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .stamp-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid #b8c8aa;
+            background: #edf3e7;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .stamp-dot.filled {
+            border-color: #4f7f51;
+            background: radial-gradient(circle at 35% 30%, #9fce73 0%, #6da550 45%, #3f6f41 100%);
+            box-shadow: 0 0 0 1px rgba(79, 127, 81, 0.16), 0 2px 4px rgba(44, 95, 45, 0.25);
+        }
+
+        .tree-demo {
+            margin-top: 22px;
+            padding: 18px;
+            border-radius: 16px;
+            background: linear-gradient(160deg, #eef5e2 0%, #dcead0 100%);
+            border: 1px solid #c8d9b7;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+            overflow: hidden;
+        }
+
+        .tree-demo-title {
+            font-size: 0.95rem;
+            color: #345236;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .tree-demo-image {
+            width: 100%;
+            max-width: 420px;
+            aspect-ratio: 16 / 10;
+            display: block;
+            margin: 0 auto;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid rgba(44, 95, 45, 0.18);
+            box-shadow: 0 14px 24px rgba(44, 95, 45, 0.22);
+            transform: perspective(1200px) rotateX(3deg);
+        }
+
+        /* Scroll Reveal Animation Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .how-it-works { padding: 80px 6vw 120px; }
+            .post-visit { padding: 90px 6vw 90px; }
+            .my-tree { padding: 80px 6vw 100px; }
+            .locator-card { padding: 30px 20px; }
+            .locator-result { line-height: 1.5; }
+            .hero h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="navbar">
+        <a href="#" class="logo">Pollok Eco-Legacy</a>
+    </nav>
+
+    <section class="hero">
+        <h1>Every Green Step Grows a Legacy</h1>
+        <p>Leave the car behind and enjoy the pure sounds of Pollok Country Park to your heart's content. Adopt a tree in memory of someone special and bring low-carbon living into warm memories.</p>
+        <a href="#how-it-works" class="btn">Discover How</a>
+    </section>
+
+    <section id="how-it-works" class="how-it-works">
+        <div class="reveal">
+            <h2>How to Plant Your Memory</h2>
+        </div>
+        <div class="steps-container">
+            <div class="step-card reveal" style="transition-delay: 0s;">
+                <div class="step-icon">🚶‍♂️🚴‍♀️</div>
+                <h3>1. Travel Low-Carbon</h3>
+                <p>Arrive at Pollok Park by walking, cycling, or taking the bus. Keep the park quiet for the birds.</p>
+            </div>
+            <div class="step-card reveal" style="transition-delay: 0.1s;">
+                <div class="step-icon">📖💮</div>
+                <h3>2. Stamp Your Passport</h3>
+                <p>Visit the museum reception. Show your travel proof and get your physical Eco-Passport stamped.</p>
+            </div>
+            <div class="step-card reveal" style="transition-delay: 0.2s;">
+                <div class="step-icon">🌳🐄</div>
+                <h3>3. Claim Your Legacy</h3>
+                <p>Collect enough stamps to unlock your adoption right. Dedicate a tree and write your story.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="digital-forest" class="post-visit">
+        <div class="reveal">
+            <h2 class="section-title">Our Silent Co-Builders</h2>
+            <p class="section-subtitle">Behind every tree is a commitment to low-carbon travel and a story of remembrance.</p>
+        </div>
+
+        <div class="tree-grid">
+            <div class="tree-card reveal">
+                <div class="card-img" style="background-image: url('Gemini_Generated_Image_lmzv2qlmzv2qlmzv.png');">
+                    <div class="card-overlay">
+                        <h4>Eco-Diary Update</h4>
+                        <p style="margin-top: 10px; font-size: 0.9rem;">Yesterday's monitoring:<br>A pair of robins stayed on the branches for 45 mins.<br>No car noise disturbance detected.</p>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <span class="tag">Century-old Scots Pine</span>
+                    <h3>In Memory of Grandpa Thomas</h3>
+                    <p style="color: #666; font-size: 0.9rem; line-height: 1.5;">"He loved listening to birds in Pollok Park early in the morning. I traded 32 cycling trips for this tree. May it stay quiet forever." — Adopted by Sarah</p>
+                </div>
+            </div>
+
+            <div class="tree-card reveal" style="transition-delay: 0.1s;">
+                <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80');">
+                    <div class="card-overlay">
+                        <h4>Eco-Diary Update</h4>
+                        <p style="margin-top: 10px; font-size: 0.9rem;">Monthly Carbon Impact:<br>Accumulated ~5.2kg CO2 absorption.<br>The sapling is growing perfectly.</p>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <span class="tag">Birch Sapling</span>
+                    <h3>For a New Life</h3>
+                    <p style="color: #666; font-size: 0.9rem; line-height: 1.5;">"Walked the trails 25 times with my newborn daughter. This tree will grow with her in a noise-free environment." — Adopted by the David Family</p>
+                </div>
+            </div>
+
+            <div class="tree-card reveal" style="transition-delay: 0.2s;">
+                <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=600&q=80'); filter: grayscale(50%);">
+                    <div class="card-overlay">
+                        <h4>Waiting for Energy</h4>
+                        <p style="margin-top: 10px; font-size: 0.9rem;">This area is still slightly affected by noise.<br>Your low-carbon energy is needed to heal it.</p>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <span class="tag" style="background:#eee; color:#999;">Waiting for Adoption</span>
+                    <h3 style="color: #666;">Will the Next Tree be Yours?</h3>
+                    <p style="color: #999; font-size: 0.9rem; line-height: 1.5;">Get your Eco-Passport, complete 30 low-carbon park visits, and unlock the adoption right for this quiet zone.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="my-tree" class="my-tree">
+        <div class="locator-card reveal">
+            <h2 class="section-title">Find My Adopted Tree</h2>
+            <p class="locator-subtitle">Enter your username to check your adoption status, tree coordinates, and stamp progress.</p>
+            <form id="tree-locator-form" class="locator-form">
+                <input
+                    id="tree-username"
+                    class="locator-input"
+                    type="text"
+                    placeholder="Username (for example: Sarah or EmmaWalker)"
+                    aria-label="Username"
+                >
+                <button type="submit" class="locator-btn">Show Coordinates</button>
+            </form>
+            <p id="locator-result" class="locator-result" aria-live="polite"></p>
+            <div id="tree-3d-demo" class="tree-demo" hidden>
+                <p class="tree-demo-title">3D Tree Demo (Realistic Preview)</p>
+                <img
+                    class="tree-demo-image"
+                    src="5ebd4d9ec52061cc6602cfa5c9d02036.jpg"
+                    alt="Real tree photo preview in Pollok Country Park"
+                    loading="lazy"
+                >
+            </div>
+            <div id="stamp-visual" class="stamp-visual" hidden>
+                <div class="stamp-visual-header">
+                    <p id="stamp-visual-label" class="stamp-visual-label"></p>
+                    <p id="stamp-visual-count" class="stamp-visual-count"></p>
+                </div>
+                <div id="stamp-dots" class="stamp-dots" aria-label="Stamp progress dots"></div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // 1. Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        // 2. Scroll Reveal effect
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 150; 
+
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        reveal(); // Trigger once on load
+
+        // 3. My tree status locator by username
+        const adoptionRequirement = 30;
+        const treeRecords = {
+            sarah: {
+                adopted: true,
+                treeName: "Century-old Scots Pine",
+                latitude: 55.8269,
+                longitude: -4.3142,
+                currentRoundStamps: 12
+            },
+            davidfamily: {
+                adopted: true,
+                treeName: "Birch Sapling",
+                latitude: 55.8256,
+                longitude: -4.3129,
+                currentRoundStamps: 9
+            },
+            parkguardian: {
+                adopted: true,
+                treeName: "Quiet Zone Oak",
+                latitude: 55.8248,
+                longitude: -4.3161,
+                currentRoundStamps: 17
+            },
+            junjiesong: {
+                adopted: true,
+                treeName: "Memorial Oak",
+                latitude: 55.8239,
+                longitude: -4.3135,
+                currentRoundStamps: 6
+            },
+            emmawalker: {
+                adopted: false,
+                totalStamps: 18
+            },
+            liamweir: {
+                adopted: false,
+                totalStamps: 27
+            },
+            juliet: {
+                adopted: false,
+                totalStamps: 14
+            }
+        };
+
+        const treeLocatorForm = document.getElementById("tree-locator-form");
+        const treeUsernameInput = document.getElementById("tree-username");
+        const locatorResult = document.getElementById("locator-result");
+        const tree3dDemo = document.getElementById("tree-3d-demo");
+        const stampVisual = document.getElementById("stamp-visual");
+        const stampVisualLabel = document.getElementById("stamp-visual-label");
+        const stampVisualCount = document.getElementById("stamp-visual-count");
+        const stampDots = document.getElementById("stamp-dots");
+
+        function escapeHtml(value) {
+            return value
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function renderStampDots(stampCount, labelText) {
+            const safeCount = Math.max(0, Math.min(adoptionRequirement, stampCount));
+
+            stampVisualLabel.textContent = labelText;
+            stampVisualCount.textContent = safeCount + "/" + adoptionRequirement;
+            stampDots.innerHTML = "";
+
+            for (let i = 0; i < adoptionRequirement; i++) {
+                const dot = document.createElement("span");
+                dot.className = "stamp-dot" + (i < safeCount ? " filled" : "");
+                dot.setAttribute("aria-hidden", "true");
+                stampDots.appendChild(dot);
+            }
+
+            stampVisual.hidden = false;
+        }
+
+        treeLocatorForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const rawName = treeUsernameInput.value.trim();
+            const lookupKey = rawName.toLowerCase().replace(/\s+/g, "");
+
+            if (!lookupKey) {
+                locatorResult.textContent = "Please enter a username.";
+                tree3dDemo.hidden = true;
+                stampVisual.hidden = true;
+                return;
+            }
+
+            const record = treeRecords[lookupKey];
+
+            if (record) {
+                if (record.adopted) {
+                    locatorResult.innerHTML = escapeHtml(rawName) + "'s " + escapeHtml(record.treeName) +
+                        " is at:<br><span class=\"coord-block\"><strong>Latitude " +
+                        record.latitude.toFixed(4) + "<br>Longitude " + record.longitude.toFixed(4) +
+                        "</strong></span>";
+                    tree3dDemo.hidden = false;
+                    renderStampDots(record.currentRoundStamps, "New Round Stamp Progress");
+                } else {
+                    locatorResult.textContent = rawName + " has accumulated " + record.totalStamps + "/" +
+                        adoptionRequirement + " stamps. Reach " + adoptionRequirement + " to unlock tree adoption.";
+                    tree3dDemo.hidden = true;
+                    renderStampDots(record.totalStamps, "Adoption Stamp Progress");
+                }
+            } else {
+                locatorResult.textContent = "No tree record found for this username yet.";
+                tree3dDemo.hidden = true;
+                stampVisual.hidden = true;
+            }
+        });
+    </script>
+</body>
+</html>
